@@ -1,0 +1,37 @@
+---
+supported_config_types: ["SERVICES",
+                         "USERS",
+                         ]
+valid_operations_on_users: ["CREATE","REMOVE","DISABLE","ENABLE","RENAME"]
+valid_values_user_changing_passwd: ["YES","NO","TRUE","FALSE"]
+valid_passwd_required_values: ["YES","NO","TRUE","FALSE"]
+
+valid_yes_values: ["YES","TRUE"]
+
+user_header: {
+      "servers":  "servers",
+      "user_name": "user_name",
+      "full_name": "full_name",
+      "description": "description",
+      "password_required": "password_required",
+      "password" : "password",
+      "account_expiry": "account_expiry",
+      "can_user_change_password": "can_user_change_password",
+      "operation": "operation"
+}
+
+can_user_change_pwd_dict: {
+    "YES": "yes",
+    "NO": "no",
+    "TRUE": "yes",
+    "FALSE": "no"
+}
+
+valid_pwd_dict: {
+  "YES": "yes",
+  "NO": "no",
+  "TRUE": "yes",
+  "FALSE": "no"
+}
+
+

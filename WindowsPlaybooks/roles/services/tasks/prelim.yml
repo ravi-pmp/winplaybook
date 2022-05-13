@@ -1,0 +1,8 @@
+---
+- fail:
+    msg: "Either the operation is not defined or doesn't have valid values. Valid values are {{ valid_operations }}"
+  when: operation is not defined or not operation|upper in valid_operations
+
+- fail:
+    msg: "Either the services is not defined or there are no services provided"
+  when: services is not defined or not services|length > 0

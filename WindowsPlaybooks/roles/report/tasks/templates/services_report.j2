@@ -1,0 +1,91 @@
+<html>
+<head>
+  <!-- Viewport options can make the page scale better on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+  <!-- CSS styling for our HTML report -->
+  {% include './stylesheet.css.j2' %}
+  </style>
+
+
+<!-- For collapsing the big table. By default the table will be opened, user can
+ click on the table and can collapse
+ -->
+<script src="jquery-3.6.0/jquery.min.js"></script>
+<script type="text/javascript">
+         $(document).on('DOMContentLoaded', function() {
+             $('tbody > tr:not(".header")');
+             $('tr.header').click(function() {
+                 $(this).nextAll('tr').each(function() {
+                     $(this).toggle();
+                });
+            });
+        });
+    </script>
+ </head>
+
+<body>
+  <div style="background-image: url(security_bank_logo1.png);display: block;margin-left: auto;margin-right: auto;background-repeat:no-repeat;height: 200px; width: 50%; "></div>
+  <!-- This is our left-hand menu and navigation bar.
+  We will generate links for each host, breaking them up by job status.
+  The color / style for failed and missing hosts can be tuned in playbook vars. -->
+
+  <div class="sidenav">
+
+    <p>Host</p>
+    {% for item in ansible_play_hosts_all  %}
+    <a href="#{{ item }}">{{ item }}</a>
+    {% endfor %}
+    <hr>
+  </div>
+
+
+  <div class="content">
+
+    <h1 id="top">{{ title }}</h1>
+    <table>
+    <tr class="header">
+     <th>ParameterName</th>
+     <th>ParameterValue</th>
+     </tr>
+    <tr>
+    <td>Job Submission Date</td>
+    <td>{{ curr_date }}</td>
+    </tr>
+    <tr>
+    <td>Ansible Tower JobID</td>
+    <td>{{ tower_job_id | default('NA') }}</td>
+    </tr>
+    </table>
+    <br>
+    <br>
+    <hr>
+
+    <h1 id="report">ServiceManagement Status</h1>
+    {% for host in ansible_play_hosts_all  %}
+        <h2 id="{{ host }}">{{ host }}</h2>
+            <table>
+              <tr class="header">
+                <th>ServiceName</th>
+                <th>IsPresent</th>
+                <th>PreState</th>
+                <th>PostState</th>
+              </tr>
+            {% for svc_entries in hostvars[host]['overall_services_status'] %}
+                <tr>
+                  <td>{{ svc_entries['service_name'] }}</td>
+                  <td>{{ svc_entries['installed'] }}</td>
+                  <td>{{ svc_entries['pre_state'] }}</td>
+                   <td>{{ svc_entries['post_state'] }}</td>
+                </tr>
+            {% endfor %}
+            </table>
+        <hr>
+    {% endfor %}
+
+  </div>
+
+</body>
+  <footer class="footer">&copy <small><i>Security Bank. All rights reserved.</i></small></footer>
+</html>

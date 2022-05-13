@@ -1,0 +1,15 @@
+#Setting the variable for the list of invalid services. Invalid services are those services which are not installed
+# on the server/machine
+- set_fact:
+    overall_services_status: []
+
+
+- include_tasks: tasks/restart/restart.yml
+  vars:
+    service_name: "{{ svc_name }}"
+  loop: "{{ services }}"
+  loop_control:
+    loop_var: svc_name
+
+- debug:
+    var: overall_services_status

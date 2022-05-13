@@ -1,0 +1,25 @@
+---
+#Since the role will be called for each of the hosts present in the consolidated_server_list, so we need to
+#make sure we process only those records for the current inventory
+
+- win_ping:
+  ignore_unreachable: true
+  ignore_errors: true
+  register: ping_result
+
+- debug:
+    var: ping_result
+
+
+- set_fact:
+    consolidated_operation_result: []
+
+#We will do the further processing only when the machine is reachable i.e ping_result.changed is true
+- include_tasks: process_user_information.yml
+  when: inventory_hostname in user_info['servers'] and ping_result.changed
+  loop: "{{ all_records }}"
+  loop_control:
+    loop_var: user_info
+
+- debug:
+    var: consolidated_operation_result

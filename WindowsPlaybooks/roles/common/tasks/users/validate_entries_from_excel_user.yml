@@ -1,0 +1,54 @@
+---
+#The validation needs to be done only once for all the servers. Hence running it once only
+
+
+#Tasks to validate the excel file
+- fail:
+    msg: "Either the excel_file_name field is empty or not defined"
+  when: excel_file_name is not defined or excel_file_name|trim==''
+
+- set_fact:
+    excel_file_path: "{{ role_path }}/../user/excel/{{ excel_file_name }}"
+
+- debug:
+    var: excel_file_path
+
+- stat:
+   path: "{{ excel_file_path }}"
+  register: excel_file_info
+  delegate_to: localhost
+
+- fail:
+    msg: "Excel file {{ excel_file_name }} doesn't exist under role users and directory excel."
+  when: excel_file_info.stat.exists==false
+
+- set_fact:
+    all_records: "{{ excel_file_path | get_all_user_records() }}"
+
+- debug:
+    var: all_records
+
+- fail:
+    msg: "There are no entries in the excel file {{ excel_file_name }}"
+  when: all_records|length<1
+
+#Consolidated server list from the excel sheet
+- set_fact:
+    consolidated_server_list: []
+
+- include_tasks: tasks/users/validate_single_row.yml
+  args:
+    apply:
+      run_once: True
+      delegate_to: localhost
+  loop: "{{ all_records }}"
+  loop_control:
+    loop_var: user_record
+
+#remove duplicates
+- set_fact:
+    consolidated_server_list: "{{ consolidated_server_list | unique }}"
+
+- debug:
+    var: consolidated_server_list
+

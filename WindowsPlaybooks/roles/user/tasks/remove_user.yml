@@ -1,0 +1,61 @@
+---
+- debug:
+    msg: "Removing the user from the server {{ inventory_hostname }} with details {{ user_info }}"
+
+- block:
+     - win_user:
+         name: "{{ user_info[user_header.user_name]|trim }}"
+         state: "query"
+         register: user_details
+
+     - debug:
+           var: user_details
+
+  rescue:
+      - debug:
+         msg: "Unable to query the user"
+
+
+#TODO: Verify if the user is not present,if the user is not present then only do the creation.
+
+- block:
+
+    - win_user:
+        name: "{{ user_info[user_header.user_name]|trim }}"
+        state: "absent"
+      register: user_removal_result
+
+    - debug:
+       var: user_removal_result
+
+    - set_fact:
+          consolidated_operation_result: "{{ consolidated_operation_result +
+                       [
+                          user_info |
+                          combine(
+                               {
+                                   'status':'success'
+                               }
+                           )
+                       ]
+                       }}"
+  rescue:
+      - debug:
+          msg: "Removal operation failed for the user details {{ user_info }}"
+      #ansible_failed_result can capture the result of the failure
+      - set_fact:
+            consolidated_operation_result: "{{ consolidated_operation_result +
+                   [
+                      user_info |
+                      combine(
+                           {
+                               'status':'fail',
+                               'remarks': ansible_failed_result
+                           }
+                       )
+                   ]
+                   }}"
+
+
+
+

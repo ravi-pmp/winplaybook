@@ -1,0 +1,4 @@
+---
+reports_root_folder: /tmp
+secure_zip_folder: false
+send_email: false

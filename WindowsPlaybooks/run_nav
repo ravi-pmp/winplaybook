@@ -1,0 +1,1 @@
+ansible-navigator run  user_operation.yml -e '{ "config_type": "users", "excel_file_name": "LocalUserOperation_Positive.xlsx" }' -m stdout 

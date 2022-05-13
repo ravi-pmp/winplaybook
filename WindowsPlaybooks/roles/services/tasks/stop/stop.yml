@@ -1,0 +1,58 @@
+---
+#first check the status of the service
+
+- include_tasks: tasks/common/fetch_status.yml
+
+- debug:
+    msg: "Status of the service {{ service_name }} is {{ service_status }}"
+
+- block:
+    - debug:
+        msg: "Service {{ service_name }} is already stopped on the server {{ inventory_hostname}}. Nothing will be done"
+    - set_fact:
+        overall_services_status: "{{ overall_services_status +
+                  [{
+                    'service_name': service_name,
+                    'installed': 'true',
+                    'pre_state': 'stopped',
+                    'post_state':'stopped'
+                  }]
+        }}"
+  when: service_status=='Stopped'
+
+- block:
+    - debug:
+        msg: "Service {{ service_name }} is not installed on the server {{ inventory_hostname}}. Nothing will be done"
+    #Add the service to the invalid list, so that it can be presented in the reported
+    - set_fact:
+        overall_services_status: "{{ overall_services_status  +
+                     [{
+                        'service_name': service_name,
+                        'installed': 'false',
+                        'pre_state': 'NA',
+                        'post_state':'NA'
+                      }]
+            }}"
+  when: service_status=='NA'
+
+- block:
+    - debug:
+        msg: "Stopping the service {{ service_name }} on the server {{ inventory_hostname}}"
+
+    - win_shell: Stop-Service -Name {{ service_name }}
+      register: svc_stop
+
+    - debug:
+       var: svc_stop
+
+    - set_fact:
+        overall_services_status: "{{ overall_services_status +
+                     [ {
+                        'service_name': service_name,
+                        'installed': true,
+                        'pre_state': 'running',
+                        'post_state':'stopped'
+                      }]
+            }}"
+
+  when: not service_status=='NA' and service_status=='Running'

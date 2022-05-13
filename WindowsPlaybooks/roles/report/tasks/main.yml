@@ -1,0 +1,106 @@
+---
+
+- name: "ReportGeneration: Creating reports folder"
+  run_once: True
+  local_action:
+    module: file
+    path: "{{ reports_root_folder }}"
+    state: directory
+
+
+
+#Setting the facts for generating the HTML report
+- set_fact:
+    #title: "{{ title }}"
+    curr_date: "{{lookup('pipe','date \"+%Y-%m-%d %H:%M\"')}}"
+
+- name: "ReportGeneration: Creating today's date directory"
+  set_fact:
+    report_date: "{{lookup('pipe','date \"+%Y-%m-%d \"')}}"
+
+### Set the UUID of the path and use that as destination
+- set_fact:
+    current_report_folder: "{{ reports_root_folder }}/{{ report_date }}/{{ report_name }}"
+    zip_path: "{{ reports_root_folder }}/{{ report_date }}/{{ report_name }}.zip"
+
+- name: "ReportGeneration: Creating the report folder {{ current_report_folder }}"
+  file:
+    path: "{{ current_report_folder }}"
+    state: directory
+  delegate_to: 127.0.0.1
+  run_once: yes
+
+
+- name: "ReportGeneration: Generating report"
+  delegate_to: localhost
+  run_once: yes
+  template:
+    src: "{{ report_template_name }}"
+    dest: "{{ current_report_folder }}/report.html"
+
+
+- name: "ReportGeneration: Copying images"
+  delegate_to: localhost
+  run_once: yes
+  copy:
+    src: "images/"
+    dest: "{{ current_report_folder }}"
+
+#Ansible copy module becomes slower when lot of files are getting copied.
+# Since we are using lot of js, hence using shell copy command
+- name: "Getting the list of js libraries from javascript_lib"
+  run_once: yes
+  find:
+    paths: "{{ role_path }}/tasks/javascript_lib"
+    file_type: directory
+    depth: 1
+  register: file_list
+
+#using shell copy command instead of ansible copy module, as it is very slow when copying lot of files
+- name: "ReportGeneration: Copying the java script libraries"
+  delegate_to: localhost
+  run_once: yes
+  shell:
+    cmd: \cp -R "{{ item.path }}" "{{ current_report_folder }}"
+  loop: "{{ file_list.files }}"
+
+#check if the resources directory is present or not
+
+###zip the current report folder and email.
+
+- name: "ReportGeneration: Securing the zipped report with password"
+  delegate_to: localhost
+  run_once: yes
+  shell:
+    chdir: "{{ current_report_folder }}"
+    cmd: "zip -r --password {{ zip_passwd }} {{ zip_path }} * "
+  no_log: yes
+  when: secure_zip_folder
+
+
+- name: "ReportGeneration: Zipping the reports without password"
+  community.general.archive:
+    path:
+      - "{{ current_report_folder }}/*"
+    dest: "{{ zip_path }}"
+    format: zip
+  delegate_to: localhost
+  run_once: yes
+  when: not secure_zip_folder
+
+
+- name: "ReportGeneration: Attaching and sending the reports via email"
+  mail:
+    host: "{{ smtp_host }}"
+    port: "{{ smpt_port }}"
+    username: "{{ smtp_user }}"
+    password: "{{ smtp_usr_passwd }}"
+    subject: "{{ email_subject }}"
+    body: "{{ email_body }}"
+    to: "{{ to_email_id }}"
+    attach: "{{ zip_path }}"
+  delegate_to: localhost
+  ignore_errors: yes
+  run_once: yes
+  when: send_email=="yes"
+

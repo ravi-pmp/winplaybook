@@ -1,0 +1,48 @@
+---
+
+- fail:
+    msg: "Servers column name must not be empty."
+  when: user_record['servers']|trim==''
+
+- set_fact:
+    server_list: "{{ (user_record['servers']|trim).split(',') }} "
+
+- set_fact:
+    consolidated_server_list: "{{ consolidated_server_list + server_list }}"
+
+- debug:
+    msg: "Server list provided by the {{ user_record }} is {{ server_list }}"
+
+- set_fact:
+    invalid_server_list: []
+
+- set_fact:
+    invalid_server_list: "{{ invalid_server_list }} + [ '{{ item }}' ]"
+  when: item not in ansible_play_hosts
+  with_items: "{{ server_list }}"
+
+- fail:
+    msg: "Provided server hostnames {{ invalid_server_list }} are not part of inventory . Aborting the  operation"
+  when: invalid_server_list|length > 0
+
+# Now validate the other information w.r.t user
+
+#Validate operation type
+- fail:
+    msg: "Invalid operation type {{ user_record[user_header.operation] }} provided. Valid operations are  {{ valid_operations_on_users }}"
+  when: user_record[user_header.operation]|trim|upper not in valid_operations_on_users
+
+
+#Validate the values of the column CanUserChangeThePassword column
+- fail:
+    msg: "Invalid value  {{ user_record[user_header.operation] }} provided for the column CanUserChangeThePassword. Valid values are  {{ valid_values_user_changing_passwd }}"
+  when: user_record[user_header.can_user_change_password]|trim|upper not in valid_values_user_changing_passwd
+
+
+- fail:
+    msg: "UserName field cannot be empty"
+  when: user_record[user_header.user_name]|trim==''
+
+- fail:
+    msg: "FullName field cannot be empty"
+  when: user_record[user_header.full_name]|trim==''

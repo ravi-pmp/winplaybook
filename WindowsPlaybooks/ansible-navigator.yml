@@ -1,0 +1,18 @@
+---
+ansible-navigator:
+  ansible:
+    config:
+      path: ./ansible.cfg
+    cmdline: "--forks 20"
+    #cmdline: "--tls-verify=false "
+  color:
+    enable: true
+  execution-environment:
+    enabled: true
+    image: aah1.ravi.local/ravi_ee
+    #image: aah1.ravi.local/ee-supported-rhel8 
+    #image: registry.redhat.io/ansible-automation-platform-21/ee-supported-rhel8
+    #image: aah1.ravi.local/community_gen_vm_ee 
+    pull:
+      arguments:
+        - "--tls-verify=false"

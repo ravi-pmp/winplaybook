@@ -1,0 +1,24 @@
+---
+#get the status of the service
+- fail:
+    msg: "service_name is not provided."
+  when: service_name is not defined or service_name|trim==''
+
+- debug:
+    msg: "Checking the status of the service {{ service_name }} "
+
+#NA if the service is not present
+- set_fact:
+    service_status: "NA"
+
+- block:
+    - win_shell: Get-Service {{ service_name }} | Select Status -ExpandProperty Status
+      register: svc_status
+    - set_fact:
+        service_status: "{{ svc_status.stdout_lines[0] }}"
+
+  rescue:
+    - debug:
+        msg: "Service {{ service_name }} is not present in the server {{ inventory_hostname }}. "
+    - set_fact:
+        service_status: "NA"

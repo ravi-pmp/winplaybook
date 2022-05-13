@@ -1,0 +1,19 @@
+---
+- fail:
+    msg: "Config type is either not defined or is empty."
+  when: config_type is not defined or config_type|trim==''
+
+- fail:
+    msg: "Invalid config type {{ config_type }} provided. Valid config types are {{ supported_config_types }}"
+  when: config_type|upper not in supported_config_types
+
+- include_tasks: validate_create_server_list.yml
+  when: config_type|upper=='SERVICES'
+
+#validating the server list only once for all the inventories. hence using args->apply->run_once
+- include_tasks: tasks/users/validate_entries_from_excel_user.yml
+  args:
+    apply:
+      run_once: true
+      delegate_to: localhost
+  when: config_type|upper=='USERS'

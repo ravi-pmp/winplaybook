@@ -1,0 +1,22 @@
+---
+- fail:
+    msg: "Either the server names are not defined or is empty."
+  when: server_names is not defined or server_names|trim==''
+
+- set_fact:
+    server_list: "{{ server_names.split(',') }} "
+
+- debug:
+    msg: "Server list provided by the configuration is {{ server_list }}"
+
+- set_fact:
+    invalid_server_list: []
+
+- set_fact:
+    invalid_server_list: "{{ invalid_server_list }} + [ '{{ item }}' ]"
+  when: item not in ansible_play_hosts
+  with_items: "{{ server_list }}"
+
+- fail:
+    msg: "Provided server hostnames {{ invalid_server_list }} are not part of inventory . Aborting the {{ operation }} operation"
+  when: invalid_server_list|length > 0

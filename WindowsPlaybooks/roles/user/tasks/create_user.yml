@@ -1,0 +1,117 @@
+---
+- debug:
+    msg: "Creating the user in the server {{ inventory_hostname }} with details {{ user_info }}"
+
+- block:
+     - win_user:
+         name: "{{ user_info[user_header.user_name]|trim }}"
+         state: "query"
+         register: user_details
+
+     - debug:
+           var: user_details
+
+  rescue:
+      - debug:
+         msg: "Unable to query the user"
+
+
+
+#TODO: Verify if the user is not present,if the user is not present then only do the creation.
+
+- block:
+    - debug:
+        msg: "Password for the user is present."
+    #If the password is given, then we will set password never expires
+    - win_user:
+        name: "{{ user_info[user_header.user_name]|trim }}"
+        fullname: "{{ user_info[user_header.full_name]|trim }}"
+        description: "{{ user_info[user_header.description]|trim }}"
+        user_cannot_change_password: "{{ can_user_change_pwd_dict[user_info[user_header.can_user_change_password]|trim|upper] }}"
+        password_never_expires: "yes"
+        password: "{{ user_info[user_header.password]|trim }}"
+        state: "present"
+      register: user_creation_result
+
+    - debug:
+        var: user_creation_result
+
+    - set_fact:
+          consolidated_operation_result: "{{ consolidated_operation_result +
+                       [
+                          user_info |
+                          combine(
+                               {
+                                   'status':'success'
+                               }
+                           )
+                       ]
+                       }}"
+  rescue:
+      - debug:
+          msg: "Creation operation failed for the user details {{ user_info }}"
+      #ansible_failed_result can capture the result of the failure
+      - set_fact:
+            consolidated_operation_result: "{{ consolidated_operation_result +
+                   [
+                      user_info |
+                      combine(
+                           {
+                               'status':'fail',
+                               'remarks': ansible_failed_result
+                           }
+                       )
+                   ]
+                   }}"
+
+  when: not user_info[user_header.password]|trim==''
+
+
+- block:
+    - debug:
+       msg: "Password for the user is not present."
+    #If the password is not given, then we will let the user to change the password when he logins
+    - win_user:
+          name: "{{ user_info[user_header.user_name]|trim }}"
+          fullname: "{{ user_info[user_header.full_name]|trim }}"
+          description: "{{ user_info[user_header.description]|trim }}"
+          user_cannot_change_password: "{{ can_user_change_pwd_dict[user_info[user_header.can_user_change_password]|trim|upper] }}"
+          password_expired: "yes"
+          state: "present"
+      register: user_creation_result
+
+    - debug:
+          var: user_creation_result
+
+    - set_fact:
+          consolidated_operation_result: "{{ consolidated_operation_result +
+                       [
+                          user_info |
+                          combine(
+                               {
+                                   'status':'success'
+                               }
+                           )
+                       ]
+                       }}"
+  rescue:
+      - debug:
+          msg: "Creation operation failed for the user details {{ user_info }}"
+      #ansible_failed_result can capture the result of the failure
+      - set_fact:
+            consolidated_operation_result: "{{ consolidated_operation_result +
+                   [
+                      user_info |
+                      combine(
+                           {
+                               'status':'fail',
+                               'remarks': ansible_failed_result
+                           }
+                       )
+                   ]
+                   }}"
+
+  when: user_info[user_header.password]|trim==''
+
+
+

@@ -1,0 +1,24 @@
+- hosts:
+    - all
+  gather_facts: no
+  roles:
+    - role: common
+
+  tasks:
+    - block:
+        - include_role:
+           name: user
+
+        #- include_role:
+         #  name: report
+          #vars:
+           # title: "UserManagement"
+            #report_name: "user_report"
+            #report_template_name: "user_report.j2"
+
+      when: inventory_hostname in consolidated_server_list
+
+    - block:
+        - debug:
+            msg: "Not performing operation as {{ inventory_hostname }} is not part of {{ consolidated_server_list }}"
+      when: not inventory_hostname in consolidated_server_list

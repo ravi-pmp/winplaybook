@@ -1,0 +1,25 @@
+- hosts:
+    - all
+  gather_facts: no
+  roles:
+    - role: common
+
+  tasks:
+    - block:
+        - include_role:
+           name: services
+
+        - include_role:
+           name: report
+          vars:
+            title: "ServiceManagement"
+            report_name: "services_report"
+            report_template_name: "services_report.j2"
+
+
+      when: inventory_hostname in server_list
+
+    - block:
+        - debug:
+            msg: "Not performing operation as {{ inventory_hostname }} is not part of {{ server_list }}"
+      when: not inventory_hostname in server_list
